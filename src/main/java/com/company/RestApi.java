@@ -126,21 +126,27 @@ public class RestApi {
         });
 
         server.get("/api/fetchArt",(req,res)->{
-            String path = req.queryParamOrDefault("path","");
-            path = musicPath+path;
-            File file = new File(path);
-            if(!file.isFile()){
-                res.redirect("/img/artwork.jpg");
-                return "";
+            try {
+                String path = req.queryParamOrDefault("path","");
+                path = musicPath+path;
+                File file = new File(path);
+                if(!file.isFile()){
+                    res.redirect("/img/defaultart_"+rand.nextInt(4)+".jpg");
+                    return null;
+                }
+                Artwork artwork = AudioFileIO.read(file).getTag().getFirstArtwork();
+                res.type(artwork.getMimeType());
+                res.header("Content-Disposition","inline; filename=artwork."+PictureTypes.getInstanceOf().getValueForId(artwork.getPictureType()));
+                HttpServletResponse raw = res.raw();
+                raw.getOutputStream().write(artwork.getBinaryData());
+                raw.getOutputStream().flush();
+                raw.getOutputStream().close();
+                return raw;
             }
-            Artwork artwork = AudioFileIO.read(file).getTag().getFirstArtwork();
-            res.type(artwork.getMimeType());
-            res.header("Content-Disposition","inline; filename=artwork."+PictureTypes.getInstanceOf().getValueForId(artwork.getPictureType()));
-            HttpServletResponse raw = res.raw();
-            raw.getOutputStream().write(artwork.getBinaryData());
-            raw.getOutputStream().flush();
-            raw.getOutputStream().close();
-            return raw;
+            catch (Exception e){
+                res.redirect("/img/defaultart_"+rand.nextInt(4)+".jpg");
+                return null;
+            }
         });
 
         server.get("/api/fetchSong",(req,res)->{

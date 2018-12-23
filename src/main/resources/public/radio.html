@@ -41,7 +41,7 @@
       margin-bottom: 5px;
     }
     .player .info .name {
-      color: #999;
+      color: #222;
       font-size: 12px;
       margin-bottom: 8px;
     }
@@ -220,6 +220,7 @@
             var infoBar = $("#info");
             var progBar = $("#pBar");
             var player = document.getElementById("audioPlayer");
+            var songLen = 0;
             player.onplay = function(){
                 controlPanel.addClass("active");
                 infoBar.addClass("active");
@@ -229,7 +230,7 @@
                 infoBar.removeClass("active");   
             }
             player.ontimeupdate = function(){
-                let len = player.duration;
+                let len = songLen;
                 let curr = player.currentTime;
                 let wid = (155*curr)/len;
                 progBar.css({'width':wid});
@@ -248,8 +249,8 @@
                     $("#titleHolder").attr("title",data.title);
                     $("title").html(`${data.artist} - ${data.title}`);
                     $("#albumArtCss").html(`.album-art::before {background-image : url('api/fetchArt?path=${data.path}') !important ;}`);
-                    $("#SongLength").html(timeformat(data.length));
                     idx = data.index;
+                    songLen = data.length
                     progBar.css({'width':0});
                     player.src = mediaPath+data.path;
                     console.log(player.src);

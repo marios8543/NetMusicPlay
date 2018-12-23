@@ -97,11 +97,6 @@ class Main {
             response.body("{\"message\":\"Not found\"}");
         });
 
-        internalServerError((req, res) -> {
-            res.type("application/json");
-            return "{\"message\":\"Not found\"}";
-        });
-
         new RestApi(server);
         new RenderedPaths(server);
     }
