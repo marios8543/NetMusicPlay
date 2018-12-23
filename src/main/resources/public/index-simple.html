@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <title>tzatzikiweeb's Music</title>
+</head>
+<body>
+    <center>
+        <audio preload id="audio1" controls="controls">Your browser does not support HTML5 Audio!</audio>
+        <br>
+        <div id="tracks">
+                <a id="btnPrev">&laquo;</a>
+                <a id="btnPlay">▶️</a>
+                <a id="btnNext">&raquo;</a>
+        </div>
+    Sort by:<select id="SortSelect" onchange="sortBy()">
+            <option value="1">Title</option>
+            <option value="2">Artist</option>
+            <option value="3">Album</option>
+            <option value="0">Filename</option>
+    </select>
+    <a id="btnRescan" style="font-size: 25px;padding: 10px;">⟲ Rescan</a>&nbsp;<a id="btnBack" style="font-size: 25px;padding: 10px;">⬅️</a>&nbsp;<input type="text" id="searchinput" placeholder="Search" style="line-height: 25px;">&nbsp;<a id="btnSearch" style="font-size: 25px;padding: 10px;">🔍</a>
+    <div id="idxcount"></div>
+        <div id="plwrap">
+            <ul id="plList">
+            </ul>
+        </div>
+    </center>
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script src="js/index.js"></script>    
+</body>

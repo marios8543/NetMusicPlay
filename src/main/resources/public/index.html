@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <title>tzatzikiweeb's Music</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="hidControl" style="position: fixed; margin: 0;padding: 0; display: none;">
+        <span id="HidnpTitle"></span><br>
+        <button id="HidbtnPrev">&laquo;</button>&nbsp;<button id="HidbtnPlay">▶️</button>&nbsp;<button id="HidbtnNext">&raquo;</button>
+    </div>
+    <div id="notifs"></div>
+  <div class="container">
+    <div class="column add-bottom">
+        <div id="mainwrap">
+            <div id="nowPlay">
+                <span class="left" id="npAction">Welcome</span>
+                <span class="right" id="npTitle"></span>
+            </div>
+            <div id="audiowrap">
+                <div id="audio0">
+                    <audio preload id="audio1" controls="controls">Your browser does not support HTML5 Audio!</audio>
+                </div>
+                <div id="tracks">
+                    <a id="btnPrev">&laquo;</a>
+                    <a id="btnPlay">▶️</a>
+                    <a id="btnNext">&raquo;</a>
+                </div>
+                <div id="tracks">
+                    <a id="btnRescan" style="font-size: 25px;padding: 10px;">⟲ Rescan</a>&nbsp;<a id="btnBack" style="font-size: 25px;padding: 10px;">⬅️</a>&nbsp;<input type="text" id="searchinput" placeholder="Search" style="line-height: 25px;">&nbsp;<a id="btnSearch" style="font-size: 25px;padding: 10px;">🔍</a>
+                </div>
+            </div>
+            <a style="color: white;">Sort by:</a><select id="SortSelect" onchange="sortBy()">
+                <option value="1">Title</option>
+                <option value="2">Artist</option>
+                <option value="3">Album</option>
+                <option value="0">Filename</option>
+            </select>
+            <div id="idxcount"></div>
+            <br id="cbr">
+            <div id="plwrap">
+                <ul id="plList">
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="js/jquery-3.3.1.min.js"></script>
+<script src="js/jquery.visible.min.js"></script>
+<script src="js/index.js"></script>
+
+</body>
+</html>
