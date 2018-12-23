@@ -1,1 +1,2 @@
-src/main/resources/* linguist-vendored=false
+*.html linguist-vendored=false
+*.css linguist-vendored=false
