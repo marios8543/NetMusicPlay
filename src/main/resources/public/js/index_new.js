@@ -47,7 +47,12 @@ function playTrack(i=-1){
 	$("#titleView").html(songList[index].title);
 	$("#infoView").html(`${songList[index].artist} - ${songList[index].album}`);
 	$("#lenTime").html(timeformat(songList[index].length));
-    player.src = mediaPath+songList[index].path;
+    if(songList[index].path.endsWith("flac")){
+        player.src = '/api/transcode?path='+songList[index].path;  
+    }
+    else{
+        player.src = mediaPath+songList[index].path;
+    }
     player.play()!==null ? player.play().catch(function(err){
         if(err.name=="NotSupportedError"){
             player.src = '/api/transcode?path='+songList[index].path;

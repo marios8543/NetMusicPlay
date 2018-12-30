@@ -17,6 +17,7 @@ function timeformat(time){
 
 var player = document.getElementById("audio1");
 var mediaPath = '/api/fetchSong?path='
+var flacPath = '/api/transcodeFlac?path='
 var index = 0;
 var sortIndex = 1;
 var songList = [];
@@ -29,10 +30,15 @@ function playTrack(i=-1){
     $("#HidnpTitle").html(songList[index].title);
     $("#npAction").html(`${songList[index].artist} (${songList[index].album})`);
     $("title").html(songList[index].artist+' - '+songList[index].title);
-    player.src = mediaPath+songList[index].path;
+    if(songList[index].path.endsWith("flac")){
+        player.src = flacPath+songList[index].path;  
+    }
+    else{
+        player.src = mediaPath+songList[index].path;
+    }
     player.play()!==null ? player.play().catch(function(err){
         if(err.name=="NotSupportedError"){
-            player.src = '/api/transcode?path='+songList[index].path;
+            player.src = flacPath+songList[index].path;
             player.play();
         }
     }) : false;

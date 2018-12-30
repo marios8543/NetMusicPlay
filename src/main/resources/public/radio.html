@@ -69,7 +69,7 @@
       position: relative;
       background-color: #fff;
       border-radius: 15px;
-      width: 300px;
+      width: 340px;
       height: 80px;
       z-index: 5;
       box-shadow: 0px 20px 20px 5px rgba(132, 132, 132, 0.3);
@@ -179,8 +179,9 @@
     </style>
 </head>
 <body style="overflow:hidden;">
+    <iframe src="silence.mp3" allow="autoplay" style="display:none"></iframe>
     <div class="player">
-        <audio id="audioPlayer"></audio>
+        <audio id="audioPlayer" autoplay></audio>
         <div id="info" class="info">
         <span id="titleHolder" class="artist overme"></span>
         <span id="artistHolder" class="name overme">Welcome</span>
@@ -190,11 +191,12 @@
     </div>
     <div id="control-panel" class="control-panel">
         <style id="albumArtCss"></style>
-        <div id="albumArt" class="album-art"></div>
+        <div id="albumArt" class="album-art" onmousedown="scratchRecord()" onmouseup="scratchRecordnt()" onmouseover="getCoords()"></div>
         <div class="controls">
             <div id="prev" class="prev"></div>
             <div id="play" class="play"></div>
             <div id="next" class="next"></div>
+            <div id="random" class="play" style="background-image:url('img/Dice_simple.svg') !important;"></div>
         </div>
     </div>
     </div>
@@ -212,13 +214,22 @@
           ret+=""+secs;
           return ret;
         }
+        var mouseDown = false;
+        document.body.onmousedown = function() { 
+          mouseDown = true;
+        }
+        document.body.onmouseup = function() {
+          mouseDown = false;
+        }
         $(document).ready(function(){
             $("html").css({'background-image':`url('img/pixels${Math.floor(Math.random()*12)+1}.gif')`})
             var mediaPath = '/api/fetchSong?path='
+            var flacPath = '/api/transcodeFlac?path='
             var idx = -1;
             var controlPanel = $("#control-panel");
             var infoBar = $("#info");
             var progBar = $("#pBar");
+            var progBarText = $("#pBarText");
             var player = document.getElementById("audioPlayer");
             var songLen = 0;
             player.onplay = function(){
@@ -232,9 +243,9 @@
             player.ontimeupdate = function(){
                 let len = songLen;
                 let curr = player.currentTime;
-                let wid = (155*curr)/len;
+                let wid = (progBarText.width()*curr)/len;
                 progBar.css({'width':wid});
-                $("#pBarText").attr("title",`${timeformat(player.currentTime)} - ${timeformat(player.duration)}`);
+                progBarText.attr("title",`${timeformat(player.currentTime)} - ${timeformat(player.duration)}`);
             }
             player.onended = function(){
                 idx++;
@@ -252,13 +263,20 @@
                     idx = data.index;
                     songLen = data.length
                     progBar.css({'width':0});
-                    player.src = mediaPath+data.path;
-                    console.log(player.src);
+                    if(data.path.endsWith("flac")){
+                      player.src = flacPath+data.path;
+                    }
+                    else{
+                      player.src= mediaPath+data.path;
+                    }
                     player.play()!==null ? player.play().catch(function(err){
                       console.log(err.name);
                         if(err.name=="NotSupportedError"){
-                            player.src = '/api/transcode?path='+data.path;
-                            player.play();
+                            player.src = flacPath+data.path;
+                            player.play()!==null ? player.play().catch(function(err){
+                              console.log(err.name);
+                              $("#next").click();
+                            }) : false;
                         }
                     }) : false;
                 });
@@ -274,6 +292,22 @@
                 idx--;
                 loadTrack();
             });
+            $("#random").click(function(){
+              idx = -1;
+              loadTrack()
+            });
+            var xmouse = 0;
+            var ymouse = 0;
+            getCoords = function(e){
+              xmouse = e.clientX;
+              ymouse = e.clientY;
+            }
+            scratchRecord = function(e){
+              player.pause();
+            }
+            scratchRecordnt = function(){
+              player.play()
+            }
             loadTrack();
             $(document).keypress(function(e){
               console.log(e.which);
