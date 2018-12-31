@@ -28,9 +28,9 @@ import static com.company.Main.musicPath;
 import static com.company.Main.rescanLibrary;
 import static com.company.Main.songs;
 
-public class RestApi {
+class RestApi {
     private static int last_compare = 1;
-    static Random rand = new Random();
+    private static final Random rand = new Random();
 
     public RestApi(Service server){
         server.get("/api/rescanLibrary",(req,res)->{
@@ -178,17 +178,15 @@ public class RestApi {
             return raw;
         });
 
-        server.get("/api/transcode",(req,res)->{
+        server.get("/api/transcodeFlac",(req,res)->{
             String path = req.queryParamOrDefault("path","");
             HttpServletResponse raw = res.raw();
             WavWriter output = new WavWriter(raw.getOutputStream());
             File file = new File(musicPath+path);
             if(file.isFile()){
-                String ext = path.split("\\.")[path.split("\\.").length-1];
-                if(!ext.equals("flac")){
-                    res.status(400);
-                    res.type("application/json");
-                    return "{\"message\":\"File is not flac\"}";
+                if(!file.getName().endsWith("flac")){
+                    res.redirect("/api/fetchSong?path="+path);
+                    return null;
                 }
                 FlacAudioFileReader reader = new FlacAudioFileReader();
                 FLACDecoder decoder = new FLACDecoder(reader.getAudioInputStream(file));
@@ -205,9 +203,7 @@ public class RestApi {
                     public void processPCM(ByteData byteData) {
                         try {
                             output.writePCM(byteData);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        } catch (IOException ignored){}
                     }
                 });
                 decoder.decode();

@@ -12,7 +12,7 @@ import static com.company.Main.exts;
 import static com.company.Main.musicPath;
 import static com.company.Main.songs;
 
-public class RenderedPaths {
+class RenderedPaths {
 
     public RenderedPaths(Service server){
         server.post("/upload_song",(req,res)->{

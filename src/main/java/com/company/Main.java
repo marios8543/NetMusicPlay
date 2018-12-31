@@ -5,6 +5,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import spark.Service;
+
 import java.io.*;
 import java.util.*;
 import static spark.Service.ignite;
@@ -14,7 +15,7 @@ import static spark.Spark.internalServerError;
 
 /** @noinspection unchecked*/
 class Main {
-    static Service server = ignite().port(4567).threadPool(200);
+    private static final Service server = ignite().port(4567).threadPool(200);
     public static final List<String> exts = Arrays.asList("mp3","flac");
     public static List<Song> songs = new ArrayList<>();
     private static final JSONParser parser = new JSONParser();
@@ -53,7 +54,7 @@ class Main {
         }
     }
 
-    public static void recoverLibrary(String jsonpath) {
+    private static void recoverLibrary(String jsonpath) {
         JSONArray libarray;
         try{
             libarray = (JSONArray)parser.parse(new FileReader(jsonpath));

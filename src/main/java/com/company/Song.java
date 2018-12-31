@@ -14,13 +14,13 @@ import java.io.File;
 import java.io.IOException;
 
 class Song {
-    final String path;
+    private final String path;
     final String filename;
     String title;
     String artist;
     String album;
-    String ext;
-    long length;
+    private String ext;
+    private long length;
 
     public Song(File filearg) throws IOException, TagException, ReadOnlyFileException, CannotReadException, InvalidAudioFrameException {
         path = filearg.getAbsolutePath().replace(Main.musicPath,"");

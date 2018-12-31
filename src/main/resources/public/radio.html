@@ -245,7 +245,7 @@
                 let curr = player.currentTime;
                 let wid = (progBarText.width()*curr)/len;
                 progBar.css({'width':wid});
-                progBarText.attr("title",`${timeformat(player.currentTime)} - ${timeformat(player.duration)}`);
+                progBarText.attr("title",`${timeformat(player.currentTime)} - ${timeformat(songLen)}`);
             }
             player.onended = function(){
                 idx++;
