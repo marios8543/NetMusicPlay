@@ -98,6 +98,12 @@ class Main {
             response.body("{\"message\":\"Not found\"}");
         });
 
+        exception(Exception.class,(exception,request,response)->{
+            response.type("application/json");
+            response.status(500);
+            response.body(String.format("{\"message\":\"%s\"}",exception.getMessage()));
+        });
+
         new RestApi(server);
         new RenderedPaths(server);
     }

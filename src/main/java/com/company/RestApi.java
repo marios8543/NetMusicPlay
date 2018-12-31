@@ -157,7 +157,8 @@ class RestApi {
                 bytes = Files.readAllBytes(Paths.get(musicPath+path));
             }
             catch (NoSuchFileException e){
-                throw new FileNotFoundException();
+                res.status(404);
+                return null;
             }
             String ext = path.split("\\.")[path.split("\\.").length-1];
             String mimetype;
@@ -211,7 +212,8 @@ class RestApi {
                 raw.getOutputStream().close();
                 return raw;
             }
-            throw new FileNotFoundException();
+            res.status(404);
+            return null;
         });
 
         server.get("/api/kill",(req,res)->{
