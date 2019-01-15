@@ -16,8 +16,8 @@ function timeformat(time){
 }
 
 var player = document.getElementById("audio1");
-var mediaPath = '/api/fetchSong?path='
-var flacPath = '/api/transcodeFlac?path='
+var mediaPath = 'api/fetchSong?path='
+var flacPath = 'api/transcodeFlac?path='
 var index = 0;
 var sortIndex = 1;
 var songList = [];
