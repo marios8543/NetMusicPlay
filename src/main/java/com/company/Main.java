@@ -41,8 +41,7 @@ class Main {
                     songs.add(song);
                     tobesaved.add(song.toJSON());
                 }
-            } catch (Exception ignored){
-            }
+            } catch (Exception ignored){ }
         });
         try{
             PrintWriter file = new PrintWriter(jsonpath);
@@ -70,12 +69,20 @@ class Main {
         }
         if(libarray.size()>0){
             for (Object aLibarray : libarray) {
-                songs.add(new Song((JSONObject) aLibarray));
+                Song song = new Song((JSONObject) aLibarray);
+                songs.add(song);
             }
         }
         else {
             rescanLibrary(jsonpath);
         }
+    }
+
+    public static Song getSongById(String id){
+        for(Song song : songs){
+            if(song.id.equals(id)) return song;
+        }
+        return null;
     }
 
     public static void main(String[] args) {
@@ -91,11 +98,6 @@ class Main {
         internalServerError((req, res) -> {
             res.type("application/json");
             return "{\"message\":\"Internal server error\"}";
-        });
-
-        exception(FileNotFoundException.class,(exception, request, response) -> {
-            response.type("application/json");
-            response.body("{\"message\":\"Not found\"}");
         });
 
         exception(Exception.class,(exception,request,response)->{

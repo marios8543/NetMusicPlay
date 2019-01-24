@@ -3,12 +3,14 @@ package com.company;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.tag.datatype.Artwork;
 import org.jaudiotagger.tag.reference.PictureTypes;
+/*
 import org.jflac.FLACDecoder;
 import org.jflac.PCMProcessor;
 import org.jflac.metadata.StreamInfo;
 import org.jflac.sound.spi.FlacAudioFileReader;
 import org.jflac.util.ByteData;
 import org.jflac.util.WavWriter;
+*/
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import spark.Service;
@@ -19,14 +21,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
-import static com.company.Main.musicPath;
-import static com.company.Main.rescanLibrary;
-import static com.company.Main.songs;
+import static com.company.Main.*;
 
 class RestApi {
     private static int last_compare = 1;
@@ -127,8 +129,8 @@ class RestApi {
 
         server.get("/api/fetchArt",(req,res)->{
             try {
-                String path = req.queryParamOrDefault("path","");
-                path = musicPath+path;
+                String path = req.queryParamOrDefault("id","");
+                path = musicPath+getSongById(path).path;
                 File file = new File(path);
                 if(!file.isFile()){
                     res.redirect("/img/defaultart_"+rand.nextInt(4)+".jpg");
@@ -150,11 +152,11 @@ class RestApi {
         });
 
         server.get("/api/fetchSong",(req,res)->{
-            String path = req.queryParamOrDefault("path","");
+            String path = req.queryParamOrDefault("id","");
             byte[] bytes;
             HttpServletResponse raw = res.raw();
             try{
-                bytes = Files.readAllBytes(Paths.get(musicPath+path));
+                bytes = Files.readAllBytes(Paths.get(musicPath+getSongById(path).path));
             }
             catch (NoSuchFileException e){
                 res.status(404);
@@ -173,6 +175,7 @@ class RestApi {
             }
             res.type(mimetype);
             res.header("Content-Disposition","inline; filename="+path.split("/")[path.split("/").length-1]);
+            res.header("Content-Length",Integer.toString(bytes.length));
             raw.getOutputStream().write(bytes);
             raw.getOutputStream().flush();
             raw.getOutputStream().close();
@@ -180,10 +183,15 @@ class RestApi {
         });
 
         server.get("/api/transcodeFlac",(req,res)->{
+            res.status(501);
+            res.type("application/json");
+            return "{\"message\":\"FLAC Transcoding is currently disabled\"}";
+            /*
+            System.gc();
             String path = req.queryParamOrDefault("path","");
             HttpServletResponse raw = res.raw();
             WavWriter output = new WavWriter(raw.getOutputStream());
-            File file = new File(musicPath+path);
+            File file = new File(musicPath+getSongById(path).path);
             if(file.isFile()){
                 if(!file.getName().endsWith("flac")){
                     res.redirect("/api/fetchSong?path="+path);
@@ -191,6 +199,7 @@ class RestApi {
                 }
                 FlacAudioFileReader reader = new FlacAudioFileReader();
                 FLACDecoder decoder = new FLACDecoder(reader.getAudioInputStream(file));
+                res.header("Content-Length",Long.toString(decoder.getTotalBytesRead()));
                 decoder.addPCMProcessor(new PCMProcessor() {
                     @Override
                     public void processStreamInfo(StreamInfo streamInfo) {
@@ -214,6 +223,7 @@ class RestApi {
             }
             res.status(404);
             return null;
+            */
         });
 
         server.get("/api/kill",(req,res)->{

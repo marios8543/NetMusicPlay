@@ -14,24 +14,20 @@ import java.io.File;
 import java.io.IOException;
 
 class Song {
-    private final String path;
+    final String path;
+    final String id;
     final String filename;
-    String title;
-    String artist;
-    String album;
-    private String ext;
+    final String title;
+    final String artist;
+    final String album;
     private long length;
 
     public Song(File filearg) throws IOException, TagException, ReadOnlyFileException, CannotReadException, InvalidAudioFrameException {
         path = filearg.getAbsolutePath().replace(Main.musicPath,"");
         filename = filearg.getName();
-        String[] tmp = filearg.getName().split("\\.");
-        ext = "";
-        if(tmp.length>0){
-            ext = tmp[tmp.length-1];
-        }
         AudioFile file = AudioFileIO.read(filearg);
         Tag tag = file.getTag();
+        id = Long.toString(Math.abs(filearg.hashCode()));
         title = tag.getFirst(FieldKey.TITLE)!=null && !tag.getFirst(FieldKey.TITLE).equals("") ? tag.getFirst(FieldKey.TITLE) : filename;
         artist = tag.getFirst(FieldKey.ARTIST)!=null && !tag.getFirst(FieldKey.ARTIST).equals("") ? tag.getFirst(FieldKey.ARTIST) : "Unknown artist";
         album = tag.getFirst(FieldKey.ALBUM)!=null && !tag.getFirst(FieldKey.ALBUM).equals("") ? tag.getFirst(FieldKey.ALBUM) : "Unknown album";
@@ -41,13 +37,9 @@ class Song {
     public Song(String patharg) throws IOException, TagException, InvalidAudioFrameException, CannotReadException, ReadOnlyFileException {
         path = patharg.replace(Main.musicPath,"");
         filename = new File(patharg).getName();
-        String[] tmp = patharg.split("\\.");
-        ext = "";
-        if(tmp.length>0){
-            ext = tmp[tmp.length-1];
-        }
         AudioFile file = AudioFileIO.read(new File(patharg));
         Tag tag = file.getTag();
+        id = Long.toString(Math.abs(patharg.hashCode()));
         title = tag.getFirst(FieldKey.TITLE)!=null && !tag.getFirst(FieldKey.TITLE).equals("") ? tag.getFirst(FieldKey.TITLE) : filename;
         artist = tag.getFirst(FieldKey.ARTIST)!=null && !tag.getFirst(FieldKey.ARTIST).equals("") ? tag.getFirst(FieldKey.ARTIST) : "Unknown artist";
         album = tag.getFirst(FieldKey.ALBUM)!=null && !tag.getFirst(FieldKey.ALBUM).equals("") ? tag.getFirst(FieldKey.ALBUM) : "Unknown album";
@@ -60,8 +52,8 @@ class Song {
         title = (String)obj.get("title");
         artist = (String)obj.get("artist");
         album = (String)obj.get("album");
-        ext = (String)obj.get("ext");
         length = (long)obj.get("length");
+        id = (String)obj.get("id");
     }
 
     /** @noinspection unchecked, unchecked */
@@ -73,6 +65,7 @@ class Song {
         ret.put("artist",artist);
         ret.put("album",album);
         ret.put("length",length);
+        ret.put("id",id);
         return ret;
     }
     
