@@ -79,8 +79,9 @@ class Main {
     }
 
     public static Song getSongById(String id){
+        int id1 = Integer.parseInt(id);
         for(Song song : songs){
-            if(song.id.equals(id)) return song;
+            if(song.id==id1) return song;
         }
         return null;
     }

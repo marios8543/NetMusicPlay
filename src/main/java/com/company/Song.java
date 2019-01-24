@@ -15,7 +15,7 @@ import java.io.IOException;
 
 class Song {
     final String path;
-    final String id;
+    final int id;
     final String filename;
     final String title;
     final String artist;
@@ -27,7 +27,7 @@ class Song {
         filename = filearg.getName();
         AudioFile file = AudioFileIO.read(filearg);
         Tag tag = file.getTag();
-        id = Long.toString(Math.abs(filearg.hashCode()));
+        id = Main.songs.size()+1;
         title = tag.getFirst(FieldKey.TITLE)!=null && !tag.getFirst(FieldKey.TITLE).equals("") ? tag.getFirst(FieldKey.TITLE) : filename;
         artist = tag.getFirst(FieldKey.ARTIST)!=null && !tag.getFirst(FieldKey.ARTIST).equals("") ? tag.getFirst(FieldKey.ARTIST) : "Unknown artist";
         album = tag.getFirst(FieldKey.ALBUM)!=null && !tag.getFirst(FieldKey.ALBUM).equals("") ? tag.getFirst(FieldKey.ALBUM) : "Unknown album";
@@ -39,7 +39,7 @@ class Song {
         filename = new File(patharg).getName();
         AudioFile file = AudioFileIO.read(new File(patharg));
         Tag tag = file.getTag();
-        id = Long.toString(Math.abs(patharg.hashCode()));
+        id = Main.songs.size()+1;
         title = tag.getFirst(FieldKey.TITLE)!=null && !tag.getFirst(FieldKey.TITLE).equals("") ? tag.getFirst(FieldKey.TITLE) : filename;
         artist = tag.getFirst(FieldKey.ARTIST)!=null && !tag.getFirst(FieldKey.ARTIST).equals("") ? tag.getFirst(FieldKey.ARTIST) : "Unknown artist";
         album = tag.getFirst(FieldKey.ALBUM)!=null && !tag.getFirst(FieldKey.ALBUM).equals("") ? tag.getFirst(FieldKey.ALBUM) : "Unknown album";
@@ -53,7 +53,7 @@ class Song {
         artist = (String)obj.get("artist");
         album = (String)obj.get("album");
         length = (long)obj.get("length");
-        id = (String)obj.get("id");
+        id = Math.toIntExact((long)obj.get("id"));
     }
 
     /** @noinspection unchecked, unchecked */
