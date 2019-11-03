@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>tzatzikiweeb.moe Music</title>
+  <meta name="author" content="tzatzikiweeb#7687">
+  <link rel="stylesheet" href="https://bootswatch.com/4/darkly/bootstrap.min.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    ul#scroller {
+      white-space: nowrap;
+      overflow-x: scroll;
+      overflow-y: hidden;
+    }
+
+    ul#scroller li {
+      list-style: none;
+      display: inline;
+    }
+
+    .my-custom-scrollbar {
+      position: relative;
+      height: 25rem;
+      width: 100%;
+      overflow: auto;
+    }
+
+    .table-wrapper-scroll-y {
+      display: block;
+    }
+
+    thead {
+      position: sticky;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container" id="mainWrap">
+    <audio id="mainAudio"></audio>
+    <div class="row" style="height: 80%;" v-on:mouseover="firstPlay = true;">
+      <div class="col-sm" id="comingUpNext">
+        <h2>Coming up next...</h2>
+        <div class="row">
+          <ul class="list-group" style="width:100%;">
+            <li v-for="song in upcoming" class="list-group-item">
+              <img v-bind:src="'api/fetchArt?id='+song.id" style="float: left; margin-right: 10px;" width="40"
+                height="40">
+              <div style="text-overflow: ellipsis;" v-bind:title="song.artist - song.title">
+                {{ song.artist }}<br>{{ song.title }}
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-sm">
+        <h2>Now playing</h2>
+        <div class="card">
+          <div class="card-body">
+            <img v-bind:src="'api/fetchArt?id='+nowPlaying.id" width="240" height="240"><br>
+            <h5>
+              {{ nowPlaying.artist }} - {{ nowPlaying.title }}<br>
+              {{ nowPlaying.album }}
+              <br>
+              {{ timeFormat(times.currentTime) }}
+              <progress v-bind:max="times.duration" v-bind:value="times.currentTime"></progress>
+              {{ timeFormat(times.duration) }}
+            </h5>
+            <button class="btn btn-secondary" v-on:click="mute()"><i
+                v-bind:class="muted ? 'fas fa-volume-up' : 'fas fa-volume-mute'"></i></button>
+            <input @change="updateVolume" type="range" min="0" max="100" value="100" style="width:170px;">
+            <button v-if="!showSkipVotes" v-on:click="voteSkip" class="btn btn-secondary">Skip</button>
+            <a v-else>Skip: {{ skipVotes }}</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm">
+        <h2>Now listening: {{ nowListening }}</h2>
+        <div class="card">
+          <div class="card-body">
+            <ul class="list-group" style="height: 18rem; overflow-y: scroll;">
+              <li v-for="message in messages" class="list-group.itme">
+                <b>{{ message.author }}:</b>&nbsp;{{ message.content }}
+              </li>
+            </ul>
+            <input v-on:keyup.enter="sendMessage()" v-model="chatInput" class="form-control" type="text"
+              placeholder="Type your message">
+          </div>
+        </div>
+      </div>
+    </div>
+    <br>
+    <div class="row">
+      <div class="table-wrapper-scroll-y my-custom-scrollbar">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Request</th>
+              <th><a v-on:click="selectSort(1)">Title</a></th>
+              <th><a v-on:click="selectSort(2)">Artist</a></th>
+              <th><a v-on:click="selectSort(3)">Album</a></th>
+            </tr>
+          </thead>
+          <tbody style="height: 20%; overflow:scroll;">
+            <tr v-for="(song,index) in songList">
+              <td><button class="btn btn-secondary" v-on:click="submitRequest(song.id)"><i
+                    class="fas fa-music"></i></button></td>
+              <td>{{ song.title }}</td>
+              <td>{{ song.artist }}</td>
+              <td>{{ song.album }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="row">
+      <ul id="scroller">
+        <li><a v-for="i in offset_count" class="btn" v-on:click="loadRange(i)"> [{{ i }}] </a></li>
+      </ul>
+    </div>
+    <button style="display: none;" id="openPopup" type="button" data-toggle="modal"
+      data-target="#exampleModalScrollable"></button>
+    <div class="modal fade" id="exampleModalScrollable" tabindex="-1" role="dialog"
+      aria-labelledby="exampleModalScrollableTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalScrollableTitle">Alert</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Browsers now require user interaction before they can play sound. Click on OK to start playback!
+          </div>
+          <div class="modal-footer">
+            <button data-dismiss="modal" aria-label="Close" v-on:click="fetchSongs(true)" type="button"
+              class="btn btn-primary">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+    crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+    integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://kit.fontawesome.com/53cc0cdc82.js" crossorigin="anonymous"></script>
+  <script src="js/new_radio.js"></script>
+</body>
+
+</html>

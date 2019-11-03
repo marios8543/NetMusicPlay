@@ -3,56 +3,58 @@ package com.company;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.tag.datatype.Artwork;
 import org.jaudiotagger.tag.reference.PictureTypes;
-/*
+
 import org.jflac.FLACDecoder;
 import org.jflac.PCMProcessor;
 import org.jflac.metadata.StreamInfo;
 import org.jflac.sound.spi.FlacAudioFileReader;
 import org.jflac.util.ByteData;
 import org.jflac.util.WavWriter;
-*/
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import spark.Service;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
 import static com.company.Main.*;
+import static java.util.Objects.requireNonNull;
 
-class RestApi {
+class PlayerApi {
     private static int last_compare = 1;
     private static final Random rand = new Random();
 
-    public RestApi(Service server){
+    public PlayerApi(Service server){
         server.get("/api/rescanLibrary",(req,res)->{
+            if(Main.scanInProgress){
+                res.status(202);
+                return null;
+            }
             int lenold = songs==null ? 0 : songs.size();
             rescanLibrary(musicPath+"webplayer_library_cache.json");
             int lennew = songs.size();
             JSONObject ret = new JSONObject();
             ret.put("song_count",songs.size());
             ret.put("added",lennew-lenold);
-            res.type("application/json");
+            res.type("application/json; charset=utf-8");
             return ret.toJSONString();
         });
 
         server.get("/api/player",(req,res)->{
-            int offset = Integer.parseInt(req.queryParamOrDefault("s","0"));
+            int offset = Integer.parseInt(req.queryParams("s")!=null ? req.queryParams("s") : "0");
             int off_count = (songs.size()/30)*30<songs.size() ? (songs.size()/30)+1 : songs.size()/30;
             offset = offset*30>songs.size() ? 0 : offset;
 
             int sort = 1; //0:filename, 1:title, 2:artist, 3:album
-            String sortBy = req.queryParamOrDefault("sortBy",null);
+            String sortBy = req.queryParams("sortBy");
             if(sortBy!=null){
                 try{
                     int s = Integer.parseInt(sortBy);
@@ -66,19 +68,15 @@ class RestApi {
                 switch (sort){
                     case 0:
                         songs.sort(Comparator.comparing(o -> o.filename));
-                        last_compare = 0;
                         break;
                     case 1:
                         songs.sort(Comparator.comparing(o -> o.title));
-                        last_compare = 1;
                         break;
                     case 2:
                         songs.sort(Comparator.comparing(o -> o.artist));
-                        last_compare = 2;
                         break;
                     case 3:
                         songs.sort(Comparator.comparing(o -> o.album));
-                        last_compare = 3;
                         break;
                 }
             }
@@ -88,14 +86,15 @@ class RestApi {
             JSONArray retarr = new JSONArray();
             sublist.forEach((s)-> retarr.add(s.toJSON()));
             ret.put("songs",retarr);
-            res.type("application/json");
+            res.type("application/json; charset=utf-8");
+            songs.sort(Comparator.comparing(o -> o.title));
             return ret.toJSONString();
         });
 
         server.get("/api/search",(req,res)->{
             JSONObject ret = new JSONObject();
-            res.type("application/json");
-            String query = req.queryParamOrDefault("q",null);
+            res.type("application/json; charset=utf-8");
+            String query = req.queryParams("q");
             if(query==null || query.length()<3){
                 res.status(400);
                 ret.put("message","No search query or query shorter than 3 characters");
@@ -114,26 +113,13 @@ class RestApi {
             return ret.toJSONString();
         });
 
-        server.get("/api/radio",(req,res)->{
-            String i = req.queryParamOrDefault("idx",Integer.toString(rand.nextInt(songs.size())));
-            int idx = Integer.parseInt(i);
-            if(idx<0 || idx>=songs.size()){
-                idx = rand.nextInt(songs.size());
-            }
-            Song song = songs.get(idx);
-            res.type("application/json");
-            JSONObject ret = song.toJSON();
-            ret.put("index",idx);
-            return ret.toJSONString();
-        });
-
         server.get("/api/fetchArt",(req,res)->{
             try {
-                String path = req.queryParamOrDefault("id","");
-                path = musicPath+getSongById(path).path;
+                String path = req.queryParams("id")!=null ? req.queryParams("id") : "";
+                path = musicPath+requireNonNull(getSongById(path)).path;
                 File file = new File(path);
                 if(!file.isFile()){
-                    res.redirect("/img/defaultart_"+rand.nextInt(4)+".jpg");
+                    res.redirect("/img/defaultart.jpg");
                     return null;
                 }
                 Artwork artwork = AudioFileIO.read(file).getTag().getFirstArtwork();
@@ -146,49 +132,51 @@ class RestApi {
                 return raw;
             }
             catch (Exception e){
-                res.redirect("/img/defaultart_"+rand.nextInt(4)+".jpg");
+                res.redirect("/img/defaultart.jpg");
                 return null;
             }
         });
 
         server.get("/api/fetchSong",(req,res)->{
-            String path = req.queryParamOrDefault("id","");
+            String path = req.queryParams("id")!=null ? req.queryParams("id") : "";
             byte[] bytes;
             HttpServletResponse raw = res.raw();
+            Song song = requireNonNull(getSongById(path));
             try{
-                bytes = Files.readAllBytes(Paths.get(musicPath+getSongById(path).path));
+                bytes = Files.readAllBytes(Paths.get(musicPath+song.path));
             }
             catch (NoSuchFileException e){
                 res.status(404);
                 return null;
             }
-            String ext = path.split("\\.")[path.split("\\.").length-1];
-            String mimetype;
-            if(ext.equals("mp3")){
-                mimetype = "audio/mpeg";
-            }
-            else if(ext.equals("flac")){
-                mimetype = "audio/x-flac";
+            String mimetype = "application/octet-stream";
+            if(song.filename.endsWith("flac")) mimetype = "audio/flac";
+            else if(song.filename.endsWith("mp3")) mimetype = "audio/mpeg";
+            res.type(mimetype);
+            if (req.headers().contains("range")) {
+                String[] ranges = req.headers("range").split(",");
+                res.status(206);
+                for (String range : ranges) {
+                    range.replace("bytes=","");
+                    String[] rangeParts = range.split("-");
+                    int startByte = Integer.parseInt(rangeParts[0]);
+                    int endByte = Integer.parseInt(rangeParts[1]);
+                    if(startByte<0 || endByte>bytes.length) server.halt(416,"Out of range");
+                    for (int i=startByte;i<endByte;i++) raw.getOutputStream().write(bytes[i]);
+                }
             }
             else {
-                mimetype = "application/octet-stream";
+                res.header("Content-Disposition","inline; filename="+song.filename);
+                res.header("Content-Length",Integer.toString(bytes.length));
+                raw.getOutputStream().write(bytes);
             }
-            res.type(mimetype);
-            res.header("Content-Disposition","inline; filename="+path.split("/")[path.split("/").length-1]);
-            res.header("Content-Length",Integer.toString(bytes.length));
-            raw.getOutputStream().write(bytes);
             raw.getOutputStream().flush();
             raw.getOutputStream().close();
             return raw;
         });
 
         server.get("/api/transcodeFlac",(req,res)->{
-            res.status(501);
-            res.type("application/json");
-            return "{\"message\":\"FLAC Transcoding is currently disabled\"}";
-            /*
-            System.gc();
-            String path = req.queryParamOrDefault("path","");
+            String path = req.queryParams("path")!=null ? req.queryParams("path") : "";
             HttpServletResponse raw = res.raw();
             WavWriter output = new WavWriter(raw.getOutputStream());
             File file = new File(musicPath+getSongById(path).path);
@@ -223,7 +211,7 @@ class RestApi {
             }
             res.status(404);
             return null;
-            */
+
         });
 
         server.get("/api/kill",(req,res)->{
@@ -232,7 +220,7 @@ class RestApi {
                 return null;
             }
             else {
-                res.type("application/json");
+                res.type("application/json; charset=utf-8");
                 res.status(403);
                 return "{\"message\":\"Only localhost can do that\"}";
             }

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>tzatzikiweeb.moe Music</title>
+  <meta name="author" content="tzatzikiweeb#7687">
+  <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.1/build/pure-min.css"
+    integrity="sha384-oAOxQR6DkCoMliIh8yFnu25d7Eq/PHS21PClpwjOTeU2jRSq11vu66rf90/cZr47" crossorigin="anonymous">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    .wrapper {
+      width: 195px;
+      padding-bottom: 5px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      background-color: #e0e0e0;
+      padding: 3px;
+      border-radius: 3px;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);
+    }
+
+    .progress-bar-fill {
+      display: block;
+      height: 5px;
+      background-color: #659cef;
+      border-radius: 3px;
+    }
+
+    .pure-u-1 {
+      padding-bottom: 5px;
+    }
+
+    ul#scroller {
+      white-space: nowrap;
+      overflow-x: scroll;
+      overflow-y: hidden;
+    }
+
+    ul#scroller li {
+      list-style: none;
+      display: inline;
+    }
+
+    body {
+      background-repeat: no-repeat;
+      background-size: cover;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="mainWrap" style="background-color: rgb(255, 255, 255, 0.7);">
+    <audio id="mainPlayer"></audio>
+    <div class="pure-g" style="background-color: rgba(0, 0, 0, .2);">
+      <div class="pure-u-4-5">
+        <div class="wrapper">
+          <div v-bind:title="time_format(currentTime)+'/'+time_format(duration)" class="progress-bar">
+            <span class="progress-bar-fill" v-bind:style="'width:'+pbar+'%;'"></span>
+          </div>
+        </div>
+        <button v-on:click="playPause()" class="pure-button"><i
+            v-bind:class="player.ended || player.paused ? 'fas fa-play' : 'fas fa-pause'"></i></button>
+        <button v-on:click="previous()" class="pure-button"><i class="fas fa-backward"></i></button>
+        <button v-on:click="next()" class="pure-button"><i class="fas fa-forward"></i></button>
+        <button v-on:click="stop()" class="pure-button"><i class="fas fa-stop"></i></button>
+        <br>
+        <div class="pure-form" style="margin-top: 5px;">
+          <input v-model="search_query" type="text" style="width: 148px;">
+          <button class="pure-button" v-on:click="search()"><i class="fas fa-search"></i></button>
+        </div>
+      </div>
+      <div class="pure-u-1-5">
+        <h2 style="margin-bottom: -15px; margin-top: 5px;">{{ now_playing.song.artist }} -
+          {{ now_playing.song.title }}</h2>
+        <h3 style="margin-bottom: 5px;">{{ now_playing.song.album }}</h3>
+      </div>
+    </div>
+    <div class="pure-g">
+      <div class="pure-u-1-1">
+        <table class="pure-table pure-table-horizontal" style="width: 100%;">
+          <thead>
+            <tr>
+              <th></th>
+              <th><a v-on:click="selectSort(1)">Title</a></th>
+              <th><a v-on:click="selectSort(2)">Artist</a></th>
+              <th><a v-on:click="selectSort(3)">Album</a></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(song,index) in songList">
+              <td><button class="pure-button" v-on:click="play(index)"><i
+                    v-bind:class="now_playing.song.id == song.id ? 'fas fa-volume-up' : 'fas fa-play-circle'"></i></button>
+              </td>
+              <td>{{ song.title }}</td>
+              <td>{{ song.artist }}</td>
+              <td>{{ song.album }}</td>
+              <td><button class="pure-button" v-on:click="download(song.id)"><i class="fas fa-download"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <ul id="scroller">
+      <li><button v-for="i in offset_count" class="pure-button" v-on:click="loadRange(i)">{{ i }}</button></li>
+    </ul>
+  </div>
+  <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="https://kit.fontawesome.com/53cc0cdc82.js" crossorigin="anonymous"></script>
+  <script src="js/player_new.js"></script>
+  <script>
+    $("body").css('background-image', `url('/static/img/pixels${Math.floor(Math.random() * 12) + 1}.gif')`);
+  </script>
+</body>
+
+</html>

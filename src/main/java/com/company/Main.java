@@ -1,6 +1,5 @@
 package com.company;
 
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -15,11 +14,14 @@ import static spark.Spark.internalServerError;
 
 /** @noinspection unchecked*/
 class Main {
-    private static final Service server = ignite().port(4567).threadPool(200);
+    private static final Service server = ignite().port(4567);
+
     public static final List<String> exts = Arrays.asList("mp3","flac");
     public static List<Song> songs = new ArrayList<>();
     private static final JSONParser parser = new JSONParser();
-    static public String musicPath;
+    public static String musicPath;
+    public static boolean scanInProgress = false;
+    public static final WSHandler wsHandler = new WSHandler();
 
     public static void rescanLibrary(String jsonpath) {
         Set<File> fileTree = new HashSet<>();
@@ -27,6 +29,7 @@ class Main {
             if(entry.isFile()) fileTree.add(entry);
             else fileTree.addAll(Arrays.asList(Objects.requireNonNull(entry.listFiles())));
         }
+        scanInProgress = true;
         songs = new ArrayList<>();
         JSONArray tobesaved = new JSONArray();
         fileTree.forEach((f)->{
@@ -47,8 +50,10 @@ class Main {
             PrintWriter file = new PrintWriter(jsonpath);
             file.write(tobesaved.toJSONString());
             file.close();
+            scanInProgress = false;
         }
         catch (Exception e){
+            scanInProgress = false;
             e.printStackTrace();
         }
     }
@@ -88,13 +93,18 @@ class Main {
 
     public static void main(String[] args) {
         if(args.length<=0){
-            System.out.println("No music path specified. Server will now exit");
-            System.exit(2);
+            musicPath = System.getenv("music_path");
+            if (musicPath==null) {
+                System.out.println("No music path specified. Server will now exit");
+                System.exit(2);
+            }
         }
-        musicPath = args[0];
+        else musicPath = args[0];
+
         recoverLibrary(musicPath+"webplayer_library_cache.json");
         songs.sort(Comparator.comparing(o -> o.title));
-        server.staticFiles.location("/public");
+        //server.staticFiles.location("/public");
+        server.staticFiles.externalLocation("/home/marios/netmusicplay/public");
 
         internalServerError((req, res) -> {
             res.type("application/json");
@@ -107,7 +117,13 @@ class Main {
             response.body(String.format("{\"message\":\"%s\"}",exception.getMessage()));
         });
 
-        new RestApi(server);
+
+
+        System.out.println("Starting server");
+
+        server.webSocket("/chat",wsHandler);
+        new PlayerApi(server);
+        new RadioApi(server);
         new RenderedPaths(server);
     }
 }

@@ -20,7 +20,7 @@ class Song {
     final String title;
     final String artist;
     final String album;
-    private long length;
+    final long length;
 
     public Song(File filearg) throws IOException, TagException, ReadOnlyFileException, CannotReadException, InvalidAudioFrameException {
         path = filearg.getAbsolutePath().replace(Main.musicPath,"");
