@@ -122,6 +122,7 @@ class RadioApi {
                     lastIndex++;
                     nowPlaying = songs.get(lastIndex);
                 }
+                if (lastIndex==songs.size()-1) lastIndex = -1;
                 for(int i=0;i<nowPlaying.length;i++) {
                     currentTime++;
                     try {

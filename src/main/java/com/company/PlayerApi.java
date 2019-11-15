@@ -119,7 +119,7 @@ class PlayerApi {
                 path = musicPath+requireNonNull(getSongById(path)).path;
                 File file = new File(path);
                 if(!file.isFile()){
-                    res.redirect("/img/defaultart.jpg");
+                    res.redirect("https://tzatzikiweeb.moe/static/img/defaultart.jpg");
                     return null;
                 }
                 Artwork artwork = AudioFileIO.read(file).getTag().getFirstArtwork();
@@ -132,7 +132,7 @@ class PlayerApi {
                 return raw;
             }
             catch (Exception e){
-                res.redirect("/img/defaultart.jpg");
+                res.redirect("https://tzatzikiweeb.moe/static/img/defaultart.jpg");
                 return null;
             }
         });
