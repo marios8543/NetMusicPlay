@@ -33,6 +33,8 @@ class RadioApi {
             ret.put("song",nowPlaying.toJSON());
             ret.put("time",currentTime);
 
+            if (!req.cookies().containsKey("usernameId")) res.cookie("usernameId", (new WSHandler.Username()).getCookieString());
+
             Song[] upcoming = new Song[5];
             if (requests.size()>=5) for(int i=0;i<5;i++) upcoming[i] = requests.get(i);
             else {
@@ -97,7 +99,7 @@ class RadioApi {
             }
             if (skipVotes.size()>=votesToSkip) {
                 skip = true;
-                wsHandler.broadcast("force_reload","");
+                WSHandler.broadcast("force_reload","");
                 return "Skipping";
             }
             else {
@@ -105,7 +107,7 @@ class RadioApi {
                 object.put("votes",skipVotes.size());
                 object.put("votesToSkip",votesToSkip);
                 res.type("application/json; charset=utf-8");
-                wsHandler.broadcast("skip_votes",String.format("%s/%s",skipVotes.size(),votesToSkip));
+                WSHandler.broadcast("skip_votes",String.format("%s/%s",skipVotes.size(),votesToSkip));
                 return object.toJSONString();
             }
         });

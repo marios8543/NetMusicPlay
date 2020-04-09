@@ -12,33 +12,78 @@ import org.json.simple.parser.ParseException;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
+import java.net.HttpCookie;
+import java.util.*;
+import java.util.List;
+
 
 @WebSocket
 public class WSHandler {
 
+    public static class Username {
+        public String username;
+        public static int adjectiveIdx;
+        public static int nounIdx;
+
+        public Username(Session session) {
+            this();
+            try {
+                Optional<HttpCookie> cookieSearchResult = session.getUpgradeRequest().getCookies().stream().filter(httpCookie -> httpCookie.getName().equals("usernameId")).findFirst();
+                System.out.println("Running session constructor");
+                System.out.println(session.getUpgradeRequest().getCookies().size());
+                if (cookieSearchResult.isPresent()) {
+                    String usernameId = cookieSearchResult.get().getValue();
+                    nounIdx = Integer.parseInt(usernameId.split("-")[0]);
+                    adjectiveIdx = Integer.parseInt(usernameId.split("-")[1]);
+
+                    username = formatUsername(adjectives.get(adjectiveIdx).toString(), nouns.get(nounIdx).toString());
+                }
+                else throw new Exception("Internal Flow Exception");
+            }
+            catch (Exception ignored) {
+            }
+        }
+
+        public Username() {
+            int[] res = getUsername();
+            adjectiveIdx = res[0];
+            nounIdx = res[1];
+            username = formatUsername(adjectives.get(adjectiveIdx).toString(), nouns.get(nounIdx).toString());
+        }
+
+        public static String getCookieString() {
+            return String.format("%d-%d", nounIdx, adjectiveIdx);
+        }
+    }
+
     private static final Random random = new Random();
     private static final Map<Session,String> users = new HashMap<>();
+    private static final String list_location = System.getenv("list_location");
+    private static JSONArray nouns;
+    private static JSONArray adjectives;
 
-    private static String getUsername() {
+    private static void  populateArrays() {
+        if (nouns != null && adjectives != null) return;
         JSONParser parser = new JSONParser();
-        JSONArray nouns = null;
-        JSONArray adjectives = null;
         try {
-            nouns = (JSONArray) parser.parse(new FileReader("/home/marios/netmusicplay/nouns-list.json"));
-            adjectives = (JSONArray) parser.parse(new FileReader("/home/marios/netmusicplay/adjectives-list.json"));
+            nouns = (JSONArray) parser.parse(new FileReader(list_location+"/nouns-list.json"));
+            adjectives = (JSONArray) parser.parse(new FileReader(list_location+"/adjectives-list.json"));
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
-        String adjective = (String) adjectives.get(random.nextInt(adjectives.size()-1));
-        String noun = (String) nouns.get(random.nextInt(nouns.size()-1));
+    }
+
+    private static String formatUsername(String adjective, String noun) {
         adjective = adjective.substring(0, 1).toUpperCase() + adjective.substring(1);
         noun = noun.substring(0, 1).toUpperCase() + noun.substring(1);
-
         return String.format("%s%s",adjective,noun);
+    }
+
+    private static int[] getUsername() {
+        populateArrays();
+        int adjective = random.nextInt(adjectives.size()-1);
+        int noun = random.nextInt(nouns.size()-1);
+        return new int[]{adjective, noun};
     }
 
     public static void broadcast(String author, String content) {
@@ -73,7 +118,7 @@ public class WSHandler {
 
     @OnWebSocketConnect
     public void connected(Session session) {
-        String username = getUsername();
+        String username = (new Username(session)).username;
         users.put(session,username);
         broadcast("",username+" has joined the chat!");
     }

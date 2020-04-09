@@ -103,8 +103,9 @@ class Main {
 
         recoverLibrary(musicPath+"webplayer_library_cache.json");
         songs.sort(Comparator.comparing(o -> o.title));
-        //server.staticFiles.location("/public");
-        server.staticFiles.externalLocation("/home/marios/netmusicplay/public");
+        String public_path = System.getenv("public_path");
+        if (public_path==null) server.staticFiles.location("/public");
+        else server.staticFiles.externalLocation(public_path);
 
         internalServerError((req, res) -> {
             res.type("application/json");
@@ -121,7 +122,7 @@ class Main {
 
         System.out.println("Starting server");
 
-        server.webSocket("/chat",wsHandler);
+        server.webSocket("/api/chat",wsHandler);
         new PlayerApi(server);
         new RadioApi(server);
         new RenderedPaths(server);
